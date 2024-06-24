@@ -1,4 +1,4 @@
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, File, UploadFile, Form
 from fastapi.responses import JSONResponse, FileResponse
 from openai import OpenAI
 import pdfplumber
@@ -101,5 +101,37 @@ async def pdf_gpt(file: UploadFile):
             #     ]
             # Devuelve las rutas de los archivos de imágenes
             return json.loads(response.choices[0].message.content)
+    except Exception as e:
+        return JSONResponse(content={"error": str(e)}, status_code=500)
+    
+@app.post("/text_gpt/")
+async def text_gpt(text: str = Form(...)):
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o",
+            response_format={"type": "json_object"},
+            messages=[
+                {
+                    "role": "system",
+                    "content": "Eres un corrector de ortografía y experto en lenguaje español, \
+                        que analiza textos y corrige para que todas las palabras tengan sentido \
+                            si el texto dado tiene errores, respetando signos de puntuación y acentuación. \
+                                Además experto en reconocimiento de letras o simbolos que un software \
+                                    de tipo OCR como tesseract interpreta, para que símbolos \
+                                        que posiblemente sean una letra puedan ser entendidos como letras. \
+                                            Aunque, no solo analizas las letras individuales, sino que \
+                                                también las palabras que esos símbolos pueden formar en \
+                                                    conjunto. Devuelves la respuesta en un objeto de tipo \
+                                                        JSON con el atributo llamado \"texto_corregido\"."
+                },
+                {
+                    "role": "user",
+                    "content": f"Analiza el siguiente texto: {text}"
+                }
+            ],
+            temperature=0,
+        )
+
+        return json.loads(response.choices[0].message.content)
     except Exception as e:
         return JSONResponse(content={"error": str(e)}, status_code=500)
