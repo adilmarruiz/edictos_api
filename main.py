@@ -1,5 +1,6 @@
 from fastapi import FastAPI, File, UploadFile, Form
 from fastapi.responses import JSONResponse, FileResponse
+from fastapi.middleware.cors import CORSMiddleware
 from openai import OpenAI
 import pdfplumber
 import io
@@ -10,6 +11,16 @@ import json
 import datetime
 
 app = FastAPI()
+
+# Configura CORS para permitir acceso desde cualquier dominio
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Puedes reemplazar "*" con los dominios específicos que deseas permitir
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 client = OpenAI()
 
 @app.post("/pdf_images")
@@ -25,7 +36,7 @@ async def pdf_images(file: UploadFile):
                 images.append(FileResponse(img_path))
             # print(images[0])
             # Devuelve las rutas de los archivos de imágenes
-            return [*images]
+            return images
     except Exception as e:
         return JSONResponse(content={"error": str(e)}, status_code=500)
     

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visor de imágenes PDF</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        input[type="file"] {
+            display: block;
+            margin-bottom: 20px;
+        }
+
+        button {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #imageContainer {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center; /* Centra las imágenes horizontalmente */
+            max-height: 200px; /* Limita la altura del contenedor */
+            overflow-y: auto; /* Agrega desplazamiento vertical si es necesario */
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #ddd;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <h1>Visor de imágenes PDF</h1>
+    <input type="file" id="pdfFileInput">
+    <button onclick="fetchImagesFromPDF()">Cargar y mostrar imágenes</button>
+    <div id="imageContainer"></div>
+
+    <script>
+        async function fetchImagesFromPDF() {
+            const fileInput = document.getElementById('pdfFileInput');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                console.error('Por favor, selecciona un archivo PDF.');
+                return;
+            }
+
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+
+                const response = await fetch('http://127.0.0.1:8000/pdf_images', {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const imageContainer = document.getElementById('imageContainer');
+                    imageContainer.innerHTML = ''; // Limpia el contenedor antes de agregar imágenes
+
+                    // Recorre los enlaces de las imágenes y crea elementos <img>
+                    data.forEach(image => {
+                        const img = document.createElement('img');
+                        img.src = image.path;
+                        img.style.maxHeight = '100px'; // Limita la altura a 100 píxeles
+                        imageContainer.appendChild(img);
+                    });
+                } else {
+                    console.error('Error al obtener las imágenes del PDF.');
+                }
+            } catch (error) {
+                console.error('Error de red:', error);
+            }
+        }
+    </script>
+</body>
+</html>
